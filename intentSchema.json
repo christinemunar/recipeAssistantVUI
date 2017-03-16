@@ -1,28 +1,41 @@
 {
   "intents": [
     {
-      "intent": "mainHelpIntent",
-      "slots": []
+      "intent": "mainHelpIntent"
     },
     {
-      "intent": "quitIntent",
-      "slots": []
+      "intent": "quitIntent"
     },
     {
       "intent": "searchRecipeIntent",
-      "slots": []
+      "slots": [
+        {
+          "name": "Recipe",
+          "type": "AMAZON.LITERAL"
+        }
+      ]
     },
     {
-      "intent": "handleRecipeIntent",
-      "slots": []
+      "intent": "handleIngredientsIntent"
+    },
+    {
+      "intent": "handleRecipeIntent"
+    },
+    {
+      "intent": "handleRestartIntent"
     },
     {
       "intent": "incrementIntent",
-      "slots": []
-    },
-    {
-      "intent": "restartIntent",
-      "slots": []
+      "slots": [
+        {
+          "name": "Order",
+          "type": "ORDER"
+        },
+        {
+          "name": "IncrementType",
+          "type": "INCREMENT_TYPE"
+        }
+      ]
     }
   ]
 }

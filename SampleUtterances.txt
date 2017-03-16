@@ -4,13 +4,18 @@ quitIntent quit recipe
 quitIntent exit recipe
 quitIntent main menu
 
-searchRecipeIntent I'd like to make recipe
-searchRecipeIntent find recipe
+searchRecipeIntent I'd like to make {pesto pasta|Recipe}
+searchRecipeIntent I'd like to make {glass of water|Recipe}
+searchRecipeIntent I'd like to make {icecream|Recipe}
+searchRecipeIntent find {glass of water|Recipe}
+searchRecipeIntent find {icecream|Recipe}
 
-handleRecipeIntent ingredients
-handleRecipeIntent what are the ingredients
+handleIngredientsIntent ingredients
+handleIngredientsIntent what are the ingredients
+
 handleRecipeIntent read recipe
 handleRecipeIntent start
-handleRecipeIntent start again
 
-incrementIntent {next|last} {ingredient|step}
+handleRestartIntent start again
+
+incrementIntent {Order} {IncrementType}

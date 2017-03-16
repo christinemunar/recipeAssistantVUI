@@ -42,7 +42,7 @@ exports.handler = function(event, context) {
           );
         }  
 
-        else {
+        else if (event.request.intent.name === "searchRecipeIntent")  {
           var dishIngredients = [];
           var dishDirections = [];
           dynamodb.query({
@@ -52,26 +52,43 @@ exports.handler = function(event, context) {
                 "#rec": "RecipeName"
               },
               ExpressionAttributeValues: {
-                ":dish": "Pasta" // GET INTENT SLOT
+                ":dish": event.request.intent.slots.Recipe.value // GET INTENT SLOT
               }
           }, function(err, data) {
               if (err) {
-                  context.done('error','reading dynamodb failed: '+err);
+                  context.done(null, "Error");
+              } else if (data.Items[0] === undefined) {
+                  noRecipeFoundError(event.request.intent.slots.Recipe.value,
+                      function callback(sessionAttributes, speechletResponse) {
+                          context.succeed(buildResponse(sessionAttributes, speechletResponse));
+                     });
+              } else {
+                  dishIngredients = (data.Items[0].Ingredients).split('\n');
+                  dishDirections = (data.Items[0].Directions).split('\n');
+                  context.done(
+                      handleRecipeIntent(
+                        dishIngredients,
+                        dishDirections,
+                        event.request.intent,
+                        event.session,
+                        function callback(sessionAttributes, speechletResponse) {
+                            context.succeed(buildResponse(sessionAttributes, speechletResponse));
+                        }
+                      )
+                  );
               }
-              dishIngredients = (data.Items[0].Ingredients).split('\n');
-              dishDirections = (data.Items[0].Directions).split('\n');
-              context.done(
-                  handleRecipeIntent(
-                    dishIngredients,
-                    dishDirections,
-                    event.request.intent,
-                    event.session,
-                    function callback(sessionAttributes, speechletResponse) {
-                        context.succeed(buildResponse(sessionAttributes, speechletResponse));
-                    }
-                  )
-              );
           });
+
+        } else {
+          handleRecipeIntent(
+              event.session.attributes.ingredients,
+              event.session.attributes.directions,
+              event.request.intent,
+              event.session,
+              function callback(sessionAttributes, speechletResponse) {
+                  context.succeed(buildResponse(sessionAttributes, speechletResponse));
+              }
+            );
         }
 
     } else if (event.request.type === "SessionEndedRequest") {
@@ -112,6 +129,23 @@ function getSearchTerms(dishes, callback) {
         buildSpeechletResponse(CARD_TITLE, speechOutput, shouldEndSession));
 }
 
+/*
+  DynamoDB Query Returns Error
+*/
+
+function noRecipeFoundError(recipeName, callback) {
+    var sessionAttributes = {},
+        speechOutput = "There is no recipe found for " + recipeName,
+        shouldEndSession = false;
+
+    sessionAttributes = {
+        "speechOutput": speechOutput,
+        "mode": "MAIN"
+    };
+    callback(sessionAttributes,
+        buildSpeechletResponse(CARD_TITLE, speechOutput, shouldEndSession));
+}
+
 function handleRecipeIntent(ingredients, directions, intent, session, callback) {
 
   /*
@@ -125,6 +159,8 @@ function handleRecipeIntent(ingredients, directions, intent, session, callback) 
         "speechOutput": speechOutput,
         "mode": "INGREDIENTS",
         "curr": 0,
+        "ingredients": ingredients,
+        "directions": directions
     };
 
     callback(sessionAttributes,
@@ -140,26 +176,60 @@ function handleRecipeIntent(ingredients, directions, intent, session, callback) 
           directionsLen = directions.length;
 
     /*
-    Called when:  1. Moved to Ingredients dialog
-                  2. Moved to Directions dialog
-                  3. Restart dialog
+    Called when:  Restart current dialog
     */
-    if (intent.name == "handleRecipeIntent") {
+    if (intent.name == "handleRestartIntent") {
 
         var speechOutput = "";
 
-        if (mode == "INGREDIENTS") {
+        if (mode == "INGREDIENTS" || (mode == "DIRECTIONS" && curr == 0)) {
           speechOutput = "The first ingredient is " + ingredients[0];
-
+          mode = "INGREDIENTS";
         } else if (mode == "DIRECTIONS") {
           speechOutput = "First, " + directions[0];
-        
+          mode = "DIRECTIONS";
         }
 
         var sessionAttributes = {
               "speechOutput": speechOutput,
               "mode": mode,
-              "curr": 0
+              "curr": 0,
+              "ingredients": ingredients,
+              "directions": directions
+          };
+
+          callback(sessionAttributes,
+              buildSpeechletResponse(CARD_TITLE, speechOutput, false));
+
+    /*
+    Called when:  Moved to Ingredients dialog
+    */
+    } else if (intent.name == "handleIngredientsIntent") {
+
+        var speechOutput = "The first ingredient is " + ingredients[0];
+        var sessionAttributes = {
+              "speechOutput": speechOutput,
+              "mode": "INGREDIENTS",
+              "curr": 0,
+              "ingredients": ingredients,
+              "directions": directions
+          };
+
+          callback(sessionAttributes,
+              buildSpeechletResponse(CARD_TITLE, speechOutput, false));
+
+    /*
+    Called when:  Moved to Recipe dialog
+    */
+    } else if (intent.name == "handleRecipeIntent") {
+
+        var speechOutput = "First, " + directions[0];
+        var sessionAttributes = {
+              "speechOutput": speechOutput,
+              "mode": "DIRECTIONS",
+              "curr": 0,
+              "ingredients": ingredients,
+              "directions": directions
           };
 
           callback(sessionAttributes,
@@ -171,14 +241,15 @@ function handleRecipeIntent(ingredients, directions, intent, session, callback) 
     */
     } else if (intent.name == "incrementIntent") {
 
-      var nextStep = 'next', //OR 'last' CHANGE ACCORDING TO SLOT
+      var order = intent.slots.Order.value,
+          incrementType = intent.slots.IncrementType.value,
           speechOutput = '';
 
       /* Increment or decrement accordingly */
-      if (nextStep == 'next') { curr++; }
-      if (nextStep == 'last') { curr--; }
+      if (order == 'next') { curr++; }
+      if (order == 'last') { curr--; }
 
-      if (mode == "INGREDIENTS") {
+      if (mode == "INGREDIENTS" && incrementType == 'ingredient') {
         
         /* Reached end of ingredients, move to DIRECTIONS mode */
         if (curr >= ingredientsLen) {
@@ -193,14 +264,16 @@ function handleRecipeIntent(ingredients, directions, intent, session, callback) 
         
         /* Say next or last ingredient */
         } else {
+          console.log(ingredients[curr]);
           speechOutput = ingredients[curr];
         }
 
-      } else if (mode == "DIRECTIONS") {
+      } else if (mode == "DIRECTIONS" && incrementType == 'step') {
 
         /* Reached end of directions, complete. */
         if (curr >= directionsLen) {
           speechOutput = "Reached end of directions. Recipe is complete.";
+          curr = directionsLen;
 
         /* No more 'last' step */
         } else if (curr < 0) {
@@ -212,12 +285,24 @@ function handleRecipeIntent(ingredients, directions, intent, session, callback) 
           speechOutput = directions[curr];
         }
 
+      } else {
+        if (mode == "DIRECTIONS" && curr == -1) {
+          mode = "INGREDIENTS";
+          curr = ingredientsLen - 1;
+          speechOutput = "Last ingredient is " + ingredients[curr];
+        } else {
+          speechOutput = "Uable to understand your request.";
+          if (order == 'next') { curr--; }
+          if (order == 'last') { curr++; }
+        }
       }
 
       var sessionAttributes = {
           "speechOutput": speechOutput,
           "mode": mode,
           "curr": curr,
+          "ingredients": ingredients,
+          "directions": directions
       };
 
       callback(sessionAttributes,
