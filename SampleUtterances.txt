@@ -1,0 +1,16 @@
+mainHelpIntent what can I say
+
+quitIntent quit recipe
+quitIntent exit recipe
+quitIntent main menu
+
+searchRecipeIntent I'd like to make recipe
+searchRecipeIntent find recipe
+
+handleRecipeIntent ingredients
+handleRecipeIntent what are the ingredients
+handleRecipeIntent read recipe
+handleRecipeIntent start
+handleRecipeIntent start again
+
+incrementIntent {next|last} {ingredient|step}

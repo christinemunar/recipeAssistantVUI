@@ -1,0 +1,28 @@
+{
+  "intents": [
+    {
+      "intent": "mainHelpIntent",
+      "slots": []
+    },
+    {
+      "intent": "quitIntent",
+      "slots": []
+    },
+    {
+      "intent": "searchRecipeIntent",
+      "slots": []
+    },
+    {
+      "intent": "handleRecipeIntent",
+      "slots": []
+    },
+    {
+      "intent": "incrementIntent",
+      "slots": []
+    },
+    {
+      "intent": "restartIntent",
+      "slots": []
+    }
+  ]
+}

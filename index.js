@@ -31,6 +31,16 @@ exports.handler = function(event, context) {
               );
           });
         }
+        
+        else if (event.request.intent.name === "quitIntent") {
+          handleFinishSessionRequest(
+            event.request.intent,
+            event.session,
+            function callback(sessionAttributes, speechletResponse) {
+                context.succeed(buildResponse(sessionAttributes, speechletResponse));
+            }
+          );
+        }  
 
         else {
           var dishIngredients = [];
@@ -42,7 +52,7 @@ exports.handler = function(event, context) {
                 "#rec": "RecipeName"
               },
               ExpressionAttributeValues: {
-                ":dish": "Pasta"
+                ":dish": "Pasta" // GET INTENT SLOT
               }
           }, function(err, data) {
               if (err) {
@@ -63,17 +73,6 @@ exports.handler = function(event, context) {
               );
           });
         }
-
-
-        else if (event.request.intent.name === "quitIntent") {
-          handleFinishSessionRequest(
-            event.request.intent,
-            event.session,
-            function callback(sessionAttributes, speechletResponse) {
-                context.succeed(buildResponse(sessionAttributes, speechletResponse));
-            }
-          );
-        }  
 
     } else if (event.request.type === "SessionEndedRequest") {
         onSessionEnded(event.request, event.session);
@@ -125,8 +124,7 @@ function handleRecipeIntent(ingredients, directions, intent, session, callback) 
     var sessionAttributes = {
         "speechOutput": speechOutput,
         "mode": "INGREDIENTS",
-        "currIngredient": 0,
-        "currDirection": 0
+        "curr": 0,
     };
 
     callback(sessionAttributes,
@@ -136,30 +134,36 @@ function handleRecipeIntent(ingredients, directions, intent, session, callback) 
     Retrieve session attributes
   */
   } else {
-      var currIngredient = session.attributes.currIngredient,
-          currDirection = session.attributes.currDirection,
+      var curr = session.attributes.curr,
           mode = session.attributes.mode,
-          ingredientsLen = ingredients.size,
-          directionsLen = directions.size;
+          ingredientsLen = ingredients.length,
+          directionsLen = directions.length;
 
     /*
     Called when:  1. Moved to Ingredients dialog
                   2. Moved to Directions dialog
+                  3. Restart dialog
     */
     if (intent.name == "handleRecipeIntent") {
 
-        if (mode == "INGREDIENTS") {
-          var nextIngredient = currIngredient++;
+        var speechOutput = "";
 
-          // SAY FIRST INGREDIENT
-          // PUT MODE TO INGREDIENT INITIALIZE SESSION ATTRIBUTES
+        if (mode == "INGREDIENTS") {
+          speechOutput = "The first ingredient is " + ingredients[0];
 
         } else if (mode == "DIRECTIONS") {
-
-          // SAY FIRST DIRECTIONS
-          // PUT MODE TO DIRECTIONS, INITIALIZE SESSION, ATTRIBUTES
-
+          speechOutput = "First, " + directions[0];
+        
         }
+
+        var sessionAttributes = {
+              "speechOutput": speechOutput,
+              "mode": mode,
+              "curr": 0
+          };
+
+          callback(sessionAttributes,
+              buildSpeechletResponse(CARD_TITLE, speechOutput, false));
 
     /*
       Called when:  1. increment/decrement Ingredients 
@@ -167,35 +171,57 @@ function handleRecipeIntent(ingredients, directions, intent, session, callback) 
     */
     } else if (intent.name == "incrementIntent") {
 
-      // DEPENDING ON SLOT INCREMENT OR DECREASE, CREATE 
-      // VAR NEXTSTEP = NEXT OR LAST THING
+      var nextStep = 'next', //OR 'last' CHANGE ACCORDING TO SLOT
+          speechOutput = '';
+
+      /* Increment or decrement accordingly */
+      if (nextStep == 'next') { curr++; }
+      if (nextStep == 'last') { curr--; }
 
       if (mode == "INGREDIENTS") {
+        
+        /* Reached end of ingredients, move to DIRECTIONS mode */
+        if (curr >= ingredientsLen) {
+          mode = "DIRECTIONS";
+          speechOutput = "Reached end of ingredients. First step, " + directions[0];
+          curr = 0;
 
-
-        // IF ON LAST INGREDIENT, SWITCH MODE TO DIRECTIONS AND DO HANDLE RECIPE INTENT?
+        /* No more 'last' ingredient */
+        } else if (curr < 0) {
+          speechOutput = "There is no last ingredient.";
+          curr = -1;
+        
+        /* Say next or last ingredient */
+        } else {
+          speechOutput = ingredients[curr];
+        }
 
       } else if (mode == "DIRECTIONS") {
 
+        /* Reached end of directions, complete. */
+        if (curr >= directionsLen) {
+          speechOutput = "Reached end of directions. Recipe is complete.";
+
+        /* No more 'last' step */
+        } else if (curr < 0) {
+          speechOutput = "There is no last step.";
+          curr = -1;
+        
+        /* Say next or last ingredient */
+        } else {
+          speechOutput = directions[curr];
+        }
 
       }
 
-    /*
-      Called when:  1. start Ingredients again
-                    2. start Directions again
-    */
-    } else if (intent.name == "restartIntent") {
+      var sessionAttributes = {
+          "speechOutput": speechOutput,
+          "mode": mode,
+          "curr": curr,
+      };
 
-      if (mode == "INGREDIENTS") {
-
-        // RESET SESSION ATTRIBUTE SSTART AT INGREDIENT 1
-
-
-      } else if (mode == "DIRECTIONS") {
-
-        // RESET SESSION ATTRIBUTE SSTART AT INGREDIENT 1
-
-      }
+      callback(sessionAttributes,
+              buildSpeechletResponse(CARD_TITLE, speechOutput, false));
 
     } else {
       callback(session.attributes,
