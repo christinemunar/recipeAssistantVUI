@@ -21,7 +21,7 @@ exports.handler = function(event, context) {
               }
               for (var i in data.Items) {
                   i = data.Items[i];
-                  dishes += i.RecipeName + ', '
+                  dishes += i.RecipeName + ', ';
               }
               context.done(
                   getSearchTerms(dishes,
@@ -40,7 +40,7 @@ exports.handler = function(event, context) {
                 context.succeed(buildResponse(sessionAttributes, speechletResponse));
             }
           );
-        }  
+        }
 
         else if (event.request.intent.name === "searchRecipeIntent")  {
           var dishIngredients = [];

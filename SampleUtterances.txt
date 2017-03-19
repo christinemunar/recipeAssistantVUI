@@ -9,13 +9,19 @@ searchRecipeIntent I'd like to make {glass of water|Recipe}
 searchRecipeIntent I'd like to make {icecream|Recipe}
 searchRecipeIntent find {glass of water|Recipe}
 searchRecipeIntent find {icecream|Recipe}
+searchRecipeIntent how do you make {icecream|Recipe}
+searchRecipeIntent I want to make {icecream|Recipe}
+searchRecipeIntent {icecream|Recipe}
 
 handleIngredientsIntent ingredients
 handleIngredientsIntent what are the ingredients
 
 handleRecipeIntent read recipe
+handleRecipeIntent read directions
+handleRecipeIntent start directions
 handleRecipeIntent start
 
 handleRestartIntent start again
+handleRestartIntent restart
 
 incrementIntent {Order} {IncrementType}
