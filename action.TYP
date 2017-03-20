@@ -153,7 +153,7 @@ function handleRecipeIntent(ingredients, directions, intent, session, callback) 
                   2. 'ingredients'
                   3. 'what are the ingredients'
   */
-  if (intent.name == "searchRecipeIntent") {
+  if (intent.name === "searchRecipeIntent") {
     var speechOutput = "The first ingredient is " + ingredients[0];
     var sessionAttributes = {
         "speechOutput": speechOutput,
@@ -178,14 +178,14 @@ function handleRecipeIntent(ingredients, directions, intent, session, callback) 
     /*
     Called when:  Restart current dialog
     */
-    if (intent.name == "handleRestartIntent") {
+    if (intent.name === "handleRestartIntent") {
 
         var speechOutput = "";
 
-        if (mode == "INGREDIENTS" || (mode == "DIRECTIONS" && curr == 0)) {
+        if (mode === "INGREDIENTS" || (mode === "DIRECTIONS" && curr == 0)) {
           speechOutput = "The first ingredient is " + ingredients[0];
           mode = "INGREDIENTS";
-        } else if (mode == "DIRECTIONS") {
+        } else if (mode === "DIRECTIONS") {
           speechOutput = "First, " + directions[0];
           mode = "DIRECTIONS";
         }
@@ -204,7 +204,7 @@ function handleRecipeIntent(ingredients, directions, intent, session, callback) 
     /*
     Called when:  Moved to Ingredients dialog
     */
-    } else if (intent.name == "handleIngredientsIntent") {
+    } else if (intent.name === "handleIngredientsIntent") {
 
         var speechOutput = "The first ingredient is " + ingredients[0];
         var sessionAttributes = {
@@ -221,7 +221,7 @@ function handleRecipeIntent(ingredients, directions, intent, session, callback) 
     /*
     Called when:  Moved to Recipe dialog
     */
-    } else if (intent.name == "handleRecipeIntent") {
+    } else if (intent.name === "handleRecipeIntent") {
 
         var speechOutput = "First, " + directions[0];
         var sessionAttributes = {
@@ -239,17 +239,18 @@ function handleRecipeIntent(ingredients, directions, intent, session, callback) 
       Called when:  1. increment/decrement Ingredients 
                     2. increment/decrement Directions 
     */
-    } else if (intent.name == "incrementIntent") {
-
+    } else if (intent.name === "incrementIntent") {
+    
       var order = intent.slots.Order.value,
           incrementType = intent.slots.IncrementType.value,
           speechOutput = '';
-
+        console.log(order);
+        console.log(incrementType);
       /* Increment or decrement accordingly */
-      if (order == 'next') { curr++; }
-      if (order == 'last') { curr--; }
-
-      if (mode == "INGREDIENTS" && incrementType == 'Ingredient') {
+      if (order === 'next' || order === 'Next') { curr++; }
+      if (order === 'last' || order === 'Last') { curr--; }
+        
+      if (mode === "INGREDIENTS" && incrementType === 'Ingredient' || incrementType === 'ingredient') {
         
         /* Reached end of ingredients, move to DIRECTIONS mode */
         if (curr >= ingredientsLen) {
@@ -267,7 +268,7 @@ function handleRecipeIntent(ingredients, directions, intent, session, callback) 
           speechOutput = ingredients[curr];
         }
 
-      } else if (mode == "DIRECTIONS" && incrementType == 'Step') {
+      } else if (mode === "DIRECTIONS" && incrementType === 'Step' || incrementType === 'step') {
 
         /* Reached end of directions, complete. */
         if (curr >= directionsLen) {
@@ -285,14 +286,14 @@ function handleRecipeIntent(ingredients, directions, intent, session, callback) 
         }
 
       } else {
-        if (mode == "DIRECTIONS" && curr == -1) {
+        if (mode === "DIRECTIONS" && curr == -1) {
           mode = "INGREDIENTS";
           curr = ingredientsLen - 1;
           speechOutput = "Last ingredient is " + ingredients[curr];
         } else {
           speechOutput = "Unable to understand your request.";
-          if (order == 'next') { curr--; }
-          if (order == 'last') { curr++; }
+          if (order === 'next' || order === 'Next') { curr--; }
+          if (order === 'last' || order === 'Last') { curr++; }
         }
       }
 
@@ -321,7 +322,7 @@ function handleRecipeIntent(ingredients, directions, intent, session, callback) 
 */
 
 function handleFinishSessionRequest(intent, session, callback) {
-    if (session.attributes.mode == "MAIN") {
+    if (session.attributes.mode === "MAIN") {
       callback(session.attributes,
         buildSpeechletResponseWithoutCard("Good bye!", true));
     } else {
