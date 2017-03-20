@@ -1,2 +1,2 @@
 IncrementType
-ingredient | step
+Ingredient | Step

@@ -249,7 +249,7 @@ function handleRecipeIntent(ingredients, directions, intent, session, callback) 
       if (order == 'next') { curr++; }
       if (order == 'last') { curr--; }
 
-      if (mode == "INGREDIENTS" && incrementType == 'ingredient') {
+      if (mode == "INGREDIENTS" && incrementType == 'Ingredient') {
         
         /* Reached end of ingredients, move to DIRECTIONS mode */
         if (curr >= ingredientsLen) {
@@ -264,11 +264,10 @@ function handleRecipeIntent(ingredients, directions, intent, session, callback) 
         
         /* Say next or last ingredient */
         } else {
-          console.log(ingredients[curr]);
           speechOutput = ingredients[curr];
         }
 
-      } else if (mode == "DIRECTIONS" && incrementType == 'step') {
+      } else if (mode == "DIRECTIONS" && incrementType == 'Step') {
 
         /* Reached end of directions, complete. */
         if (curr >= directionsLen) {
@@ -291,7 +290,7 @@ function handleRecipeIntent(ingredients, directions, intent, session, callback) 
           curr = ingredientsLen - 1;
           speechOutput = "Last ingredient is " + ingredients[curr];
         } else {
-          speechOutput = "Uable to understand your request.";
+          speechOutput = "Unable to understand your request.";
           if (order == 'next') { curr--; }
           if (order == 'last') { curr++; }
         }
